@@ -1,0 +1,17 @@
+package day5;
+
+import java.util.Scanner;
+
+public class Buy_a_Shovel {
+    public static void main(String[] args) {
+        Scanner sc=new Scanner(System.in);
+        int k=sc.nextInt();
+        int r=sc.nextInt();
+        for(int i=1;i<=10;i++){
+            if((i*k)%10==0||(i*k)%10==r){
+                System.out.println(i);
+                return;
+            }
+        }
+    }
+}
