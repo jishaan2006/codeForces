@@ -4,10 +4,24 @@ My collection of **Codeforces problem solutions in Java**, organized by topic fo
 
 ## 📊 Repository Stats
 
-- **142** solved problems
+- **142** solutions in this repository
 - **Language:** Java
 - **Platform:** Codeforces
 - **Organization:** Topic-based
+
+## 👨‍💻 Codeforces Profile
+
+**Handle:** [jishaan123465](https://codeforces.com/profile/jishaan123465)
+
+| Stat | Value |
+|---|---:|
+| Current Rating | 785 |
+| Max Rating | 785 |
+| Rank | Newbie |
+| Problems Solved | 145 |
+| Max Streak | 34 days |
+
+> 🎯 Goal: Keep solving, improve the rating, and move up the ranks.
 
 ## 📚 Topics
 
@@ -45,9 +59,10 @@ Solutions are organized by their **primary problem-solving topic** rather than b
 
 All solutions in this repository are currently written in **Java**.
 
-## 🔗 Codeforces
+## 🔗 Links
 
-[Visit Codeforces](https://codeforces.com/)
+- [Codeforces Profile](https://codeforces.com/profile/jishaan123465)
+- [GitHub Repository](https://github.com/jishaan2006/codeForces)
 
 ---
 
