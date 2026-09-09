@@ -1,0 +1,80 @@
+﻿name: Update Codeforces Stats
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-stats:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch Codeforces profile
+        id: cf
+        run: |
+          RESPONSE=$(curl -s "https://codeforces.com/api/user.info?handles=jishaan123465")
+          echo "$RESPONSE" > cf.json
+
+          RATING=$(python -c "import json; print(json.load(open('cf.json'))['result'][0]['rating'])")
+          MAX_RATING=$(python -c "import json; print(json.load(open('cf.json'))['result'][0]['maxRating'])")
+          RANK=$(python -c "import json; print(json.load(open('cf.json'))['result'][0]['rank'])")
+
+          echo "rating=$RATING" >> "$GITHUB_OUTPUT"
+          echo "max_rating=$MAX_RATING" >> "$GITHUB_OUTPUT"
+          echo "rank=$RANK" >> "$GITHUB_OUTPUT"
+
+      - name: Update README
+        env:
+          RATING: ${{ steps.cf.outputs.rating }}
+          MAX_RATING: ${{ steps.cf.outputs.max_rating }}
+          RANK: ${{ steps.cf.outputs.rank }}
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import os
+          import re
+
+          path = Path("README.md")
+          text = path.read_text(encoding="utf-8")
+
+          text = re.sub(
+              r'\| Current Rating \|.*\|',
+              f'| Current Rating | {os.environ["RATING"]} |',
+              text
+          )
+
+          text = re.sub(
+              r'\| Max Rating \|.*\|',
+              f'| Max Rating | {os.environ["MAX_RATING"]} |',
+              text
+          )
+
+          text = re.sub(
+              r'\| Rank \|.*\|',
+              f'| Rank | {os.environ["RANK"].title()} |',
+              text
+          )
+
+          path.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Commit updated stats
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add README.md
+
+          if git diff --cached --quiet; then
+            echo "No README changes."
+          else
+            git commit -m "Update Codeforces stats"
+            git push
+          fi

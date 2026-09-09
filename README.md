@@ -4,7 +4,7 @@ My collection of **Codeforces problem solutions in Java**, organized by topic fo
 
 ## 📊 Repository Stats
 
-- **142** solutions in this repository
+- **142** Java solutions tracked in this repository
 - **Language:** Java
 - **Platform:** Codeforces
 - **Organization:** Topic-based
