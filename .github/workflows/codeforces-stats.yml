@@ -16,25 +16,122 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Fetch Codeforces profile
+      - name: Fetch Codeforces stats
         id: cf
         run: |
-          RESPONSE=$(curl -s "https://codeforces.com/api/user.info?handles=jishaan123465")
-          echo "$RESPONSE" > cf.json
+          python <<'PY'
+          import json
+          import os
+          import time
+          import urllib.request
+          from datetime import datetime, timezone
 
-          RATING=$(python -c "import json; print(json.load(open('cf.json'))['result'][0]['rating'])")
-          MAX_RATING=$(python -c "import json; print(json.load(open('cf.json'))['result'][0]['maxRating'])")
-          RANK=$(python -c "import json; print(json.load(open('cf.json'))['result'][0]['rank'])")
+          HANDLE = "jishaan123465"
 
-          echo "rating=$RATING" >> "$GITHUB_OUTPUT"
-          echo "max_rating=$MAX_RATING" >> "$GITHUB_OUTPUT"
-          echo "rank=$RANK" >> "$GITHUB_OUTPUT"
+          def fetch(url):
+              with urllib.request.urlopen(url) as response:
+                  data = json.load(response)
+
+              if data["status"] != "OK":
+                  raise RuntimeError(
+                      data.get("comment", "Codeforces API request failed")
+                  )
+
+              return data["result"]
+
+          # Profile information
+          user = fetch(
+              f"https://codeforces.com/api/user.info?handles={HANDLE}"
+          )[0]
+
+          rating = user["rating"]
+          max_rating = user["maxRating"]
+          rank = user["rank"].title()
+
+          # Fetch all submissions
+          submissions = []
+          start = 1
+          batch_size = 10000
+
+          while True:
+              batch = fetch(
+                  f"https://codeforces.com/api/user.status"
+                  f"?handle={HANDLE}&from={start}&count={batch_size}"
+              )
+
+              submissions.extend(batch)
+
+              if len(batch) < batch_size:
+                  break
+
+              start += batch_size
+              time.sleep(2.2)
+
+          # Count unique solved problems
+          solved_problems = set()
+
+          # Collect days on which a problem was successfully solved
+          submission_days = set()
+
+          for submission in submissions:
+              if submission.get("verdict") == "OK":
+                  timestamp = submission.get("creationTimeSeconds")
+
+                  if timestamp:
+                      day = datetime.fromtimestamp(
+                          timestamp, tz=timezone.utc
+                      ).date()
+                      submission_days.add(day)
+
+                  problem = submission.get("problem", {})
+                  contest_id = problem.get("contestId")
+                  index = problem.get("index")
+
+                  if contest_id is not None and index:
+                      solved_problems.add((contest_id, index))
+
+          # Calculate maximum consecutive submission-day streak
+          max_streak = 0
+          current_streak = 0
+          previous_day = None
+
+          for day in sorted(submission_days):
+              if previous_day is None:
+                  current_streak = 1
+              elif (day - previous_day).days == 1:
+                  current_streak += 1
+              else:
+                  current_streak = 1
+
+              max_streak = max(max_streak, current_streak)
+              previous_day = day
+
+          solved = len(solved_problems)
+
+          print(f"Current Rating: {rating}")
+          print(f"Max Rating: {max_rating}")
+          print(f"Rank: {rank}")
+          print(f"Problems Solved: {solved}")
+          print(f"Max Streak: {max_streak} days")
+
+          # Send values to GitHub Actions
+          output_file = os.environ["GITHUB_OUTPUT"]
+
+          with open(output_file, "a", encoding="utf-8") as f:
+              f.write(f"rating={rating}\n")
+              f.write(f"max_rating={max_rating}\n")
+              f.write(f"rank={rank}\n")
+              f.write(f"solved={solved}\n")
+              f.write(f"streak={max_streak}\n")
+          PY
 
       - name: Update README
         env:
           RATING: ${{ steps.cf.outputs.rating }}
           MAX_RATING: ${{ steps.cf.outputs.max_rating }}
           RANK: ${{ steps.cf.outputs.rank }}
+          SOLVED: ${{ steps.cf.outputs.solved }}
+          STREAK: ${{ steps.cf.outputs.streak }}
         run: |
           python <<'PY'
           from pathlib import Path
@@ -44,23 +141,25 @@ jobs:
           path = Path("README.md")
           text = path.read_text(encoding="utf-8")
 
-          text = re.sub(
-              r'\| Current Rating \|.*\|',
-              f'| Current Rating | {os.environ["RATING"]} |',
-              text
-          )
+          replacements = {
+              r'\| Current Rating \|.*\|':
+                  f'| Current Rating | {os.environ["RATING"]} |',
 
-          text = re.sub(
-              r'\| Max Rating \|.*\|',
-              f'| Max Rating | {os.environ["MAX_RATING"]} |',
-              text
-          )
+              r'\| Max Rating \|.*\|':
+                  f'| Max Rating | {os.environ["MAX_RATING"]} |',
 
-          text = re.sub(
-              r'\| Rank \|.*\|',
-              f'| Rank | {os.environ["RANK"].title()} |',
-              text
-          )
+              r'\| Rank \|.*\|':
+                  f'| Rank | {os.environ["RANK"]} |',
+
+              r'\| Problems Solved \|.*\|':
+                  f'| Problems Solved | {os.environ["SOLVED"]} |',
+
+              r'\| Max Streak \|.*\|':
+                  f'| Max Streak | {os.environ["STREAK"]} days |',
+          }
+
+          for pattern, replacement in replacements.items():
+              text = re.sub(pattern, replacement, text)
 
           path.write_text(text, encoding="utf-8")
           PY
@@ -78,3 +177,4 @@ jobs:
             git commit -m "Update Codeforces stats"
             git push
           fi
+
