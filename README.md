@@ -18,7 +18,7 @@ My collection of **Codeforces problem solutions in Java**, organized by topic fo
 | Current Rating | 785 |
 | Max Rating | 785 |
 | Rank | Newbie |
-| Problems Solved | 145 |
+| Problems Solved | 147 |
 | Max Streak | 34 days |
 
 > 🎯 Goal: Keep solving, improve the rating, and move up the ranks.
