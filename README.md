@@ -4,7 +4,7 @@ My collection of **Codeforces problem solutions in Java**, organized by topic fo
 
 ## 📊 Repository Stats
 
-- **142** Java solutions tracked in this repository
+- **146** Java solutions tracked in this repository
 - **Language:** Java
 - **Platform:** Codeforces
 - **Organization:** Topic-based
@@ -27,21 +27,21 @@ My collection of **Codeforces problem solutions in Java**, organized by topic fo
 
 | # | Topic | Solutions |
 |---|---|---:|
-| 01 | [Implementation](./01_Implementation) | 44 |
-| 02 | [Math](./02_Math) | 16 |
+| 01 | [Implementation](./01_Implementation) | 46 |
+| 02 | [Math](./02_Math) | 15 |
 | 03 | [Strings](./03_Strings) | 26 |
 | 04 | [Arrays](./04_Arrays) | 0 |
 | 05 | [Sorting](./05_Sorting) | 8 |
 | 06 | [Greedy](./06_Greedy) | 16 |
 | 07 | [Brute Force](./07_Brute_Force) | 23 |
-| 08 | [Constructive](./08_Constructive) | 2 |
+| 08 | [Constructive](./08_Constructive) | 3 |
 | 09 | [Binary Search](./09_Binary_Search) | 1 |
 | 10 | [Two Pointers](./10_Two_Pointers) | 0 |
 | 11 | [Data Structures](./11_Data_Structures) | 2 |
 | 12 | [Graphs](./12_Graphs) | 1 |
 | 13 | [Trees](./13_Trees) | 1 |
 | 14 | [Dynamic Programming](./14_Dynamic_Programming) | 0 |
-| 15 | [Number Theory](./15_Number_Theory) | 3 |
+| 15 | [Number Theory](./15_Number_Theory) | 4 |
 
 ## 🗂️ Structure
 
