@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   update-stats:
@@ -39,7 +40,6 @@ jobs:
 
               return data["result"]
 
-          # Profile information
           user = fetch(
               f"https://codeforces.com/api/user.info?handles={HANDLE}"
           )[0]
@@ -48,7 +48,6 @@ jobs:
           max_rating = user["maxRating"]
           rank = user["rank"].title()
 
-          # Fetch all submissions
           submissions = []
           start = 1
           batch_size = 10000
@@ -67,10 +66,7 @@ jobs:
               start += batch_size
               time.sleep(2.2)
 
-          # Count unique solved problems
           solved_problems = set()
-
-          # Collect days on which a problem was successfully solved
           submission_days = set()
 
           for submission in submissions:
@@ -90,7 +86,6 @@ jobs:
                   if contest_id is not None and index:
                       solved_problems.add((contest_id, index))
 
-          # Calculate maximum consecutive submission-day streak
           max_streak = 0
           current_streak = 0
           previous_day = None
@@ -114,10 +109,7 @@ jobs:
           print(f"Problems Solved: {solved}")
           print(f"Max Streak: {max_streak} days")
 
-          # Send values to GitHub Actions
-          output_file = os.environ["GITHUB_OUTPUT"]
-
-          with open(output_file, "a", encoding="utf-8") as f:
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
               f.write(f"rating={rating}\n")
               f.write(f"max_rating={max_rating}\n")
               f.write(f"rank={rank}\n")
@@ -141,6 +133,39 @@ jobs:
           path = Path("README.md")
           text = path.read_text(encoding="utf-8")
 
+          # Count all Java solutions in the repository
+          java_files = list(Path(".").rglob("*.java"))
+          total_solutions = len(java_files)
+
+          # Update total repository count
+          text = re.sub(
+              r'- \*\*\d+\*\* Java solutions tracked in this repository',
+              f'- **{total_solutions}** Java solutions tracked in this repository',
+              text
+          )
+
+          # Update topic counts based on actual folders
+          topic_pattern = re.compile(
+              r'(\| \d{2} \| \[.*?\]\(\./([^)]*)\) \| )\d+( \|)'
+          )
+
+          def update_topic(match):
+              prefix = match.group(1)
+              folder = match.group(2)
+              suffix = match.group(3)
+
+              folder_path = Path(folder)
+
+              if folder_path.exists():
+                  count = len(list(folder_path.rglob("*.java")))
+              else:
+                  count = 0
+
+              return f"{prefix}{count}{suffix}"
+
+          text = topic_pattern.sub(update_topic, text)
+
+          # Update Codeforces profile stats
           replacements = {
               r'\| Current Rating \|.*\|':
                   f'| Current Rating | {os.environ["RATING"]} |',
@@ -164,17 +189,13 @@ jobs:
           path.write_text(text, encoding="utf-8")
           PY
 
-      - name: Commit updated stats
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add README.md
-
-          if git diff --cached --quiet; then
-            echo "No README changes."
-          else
-            git commit -m "Update Codeforces stats"
-            git push
-          fi
-
+      - name: Create stats pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update Codeforces stats"
+          title: "Update Codeforces stats"
+          body: |
+            Automatically updated repository and Codeforces statistics.
+          branch: update-codeforces-stats
+          delete-branch: true
